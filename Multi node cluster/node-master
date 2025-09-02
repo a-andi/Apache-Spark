@@ -1,0 +1,71 @@
+sudo apt update
+sudo apt-get install default-jdk curl -y
+java -version
+
+sudo wget https://dlcdn.apache.org/spark/spark-4.0.0/spark-4.0.0-bin-hadoop3-connect.tgz
+#OR
+sudo wget https://downloads.apache.org/spark/spark-4.0.0/spark-4.0.0-bin-hadoop3.tgz
+
+sudo tar xvf spark-4.0.0-bin-hadoop3-connect.tgz
+#OR
+sudo tar xvf spark-4.0.0-bin-hadoop3.tgz
+
+sudo mv spark-4.0.0-bin-hadoop3-connect /opt/spark
+#OR
+sudo mv spark-4.0.0-bin-hadoop3 /opt/spark
+
+#configure
+sudo nano ~/.profile
+#add Text
+	export SPARK_HOME=/opt/spark
+	export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+	export PYSPARK_PYTHON=/usr/bin/python3
+#load Profile
+	source ~/.profile
+
+#Configure Spark-env.sh
+cp /opt/spark/conf/spark-env.sh.template /opt/spark/conf/spark-env.sh
+sudo nano /opt/spark/conf/spark-env.sh
+	export SPARK_MASTER_HOST='master_node_ip'
+	export JAVA_HOME='/usr/lib/jvm/java-21-openjdk-amd64'
+	export SPARK_WORKER_CORE=2
+	export SPARK_WORKER_MEMORY=4G
+
+#configure worker in master node
+sudo nano/opt/spark/conf/worker
+<worker-node-1-ip>
+<worker-node-2-ip>
+<worker-node-3-ip>
+
+#if needed SSH Paswordless setup
+ssh-keygen -t rsa (enter trus)
+ssh-copy-id <user@worker-nodeip>
+	if can't open
+	 
+	touch -/.ssh/authorized_key 		#in worker
+	cat -/.ssh/idrsa.pub	    		#in master node and copy thr key
+	sudo nano -/.ssh/authorized_key		#in worker then paste the key
+	
+#if need user spark
+sudo useradd spark
+
+#Create a systemd service file for apache spark
+nano /etc/systemd/system/spark-master.service
+	[Unit]
+	Description=Apache Spark Master
+	After=network.target
+	
+	[Service]
+	Type=forking
+	user=spark
+	Group=spark
+	ExecStart=/opt/spark/sbin/start-master.sh
+	ExecStop=/opt/spark/sbin/stop-master.sh
+	
+	[Install]
+	WantedBy=multi-user.target
+
+sudo systemctl daemon-reload
+sudo systemctl start spark-master
+sudo systemctl enable spark-master
+sudo systemctl status spark-master
