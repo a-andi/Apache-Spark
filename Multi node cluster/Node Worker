@@ -5,6 +5,12 @@ Ubuntu 24.
 
 sudo apt update
 sudo apt-get install default-jdk curl -y
+
+#OR
+
+sudo apt update && sudo apt upgrade -y
+sudo apt install default-jdk scala git wget unzip -y
+
 java -version
 
 sudo wget https://dlcdn.apache.org/spark/spark-4.0.0/spark-4.0.0-bin-hadoop3-connect.tgz
