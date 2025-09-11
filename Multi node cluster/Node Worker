@@ -43,6 +43,7 @@ sudo nano /opt/spark/conf/spark-env.sh
 	export SPARK_WORKER_MEMORY=4G
 
 #Install PySpark (untuk Python)
+	sudo apt update && sudo apt install python3-pip -y
 	pip install pyspark findspark
 #Cek versi:
 	python3 -c "import pyspark; print(pyspark.__version__)"
