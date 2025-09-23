@@ -1,0 +1,30 @@
+1. ZooKeeper Cluster (3 node)
+Hostname	IP	Service
+zoo1	192.168.1.11	ZooKeeper
+zoo2	192.168.1.12	ZooKeeper
+zoo3	192.168.1.13	ZooKeeper
+2. Spark Master (3 node)
+Hostname	IP	Service
+spark-master1	192.168.1.21	Spark Master
+spark-master2	192.168.1.22	Spark Master
+spark-master3	192.168.1.23	Spark Master
+
+Semua master ini akan terhubung ke ZooKeeper quorum → hanya satu yang aktif (leader), sisanya standby.
+
+3. Spark Worker (3 node)
+Hostname	IP	Service
+spark-worker1	192.168.1.31	Spark Worker
+spark-worker2	192.168.1.32	Spark Worker
+spark-worker3	192.168.1.33	Spark Worker
+4. Load Balancer (Opsional, 2 node + VIP)
+Hostname	IP	Service
+lb1	192.168.1.41	HAProxy/Keepalived
+lb2	192.168.1.42	HAProxy/Keepalived
+VIP	192.168.1.40	Virtual IP (Front-end untuk Spark Master)
+
+Client/driver job cukup connect ke:
+
+spark://192.168.1.40:7077
+
+
+Sehingga tidak perlu tahu master mana yang sedang aktif.
