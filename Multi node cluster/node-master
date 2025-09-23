@@ -65,19 +65,23 @@ sudo useradd spark
 
 #Create a systemd service file for apache spark
 nano /etc/systemd/system/spark-master.service
-	[Unit]
-	Description=Apache Spark Master
-	After=network.target
-	
-	[Service]
-	Type=forking
-	user=spark
-	Group=spark
-	ExecStart=/opt/spark/sbin/start-master.sh
-	ExecStop=/opt/spark/sbin/stop-master.sh
-	
-	[Install]
-	WantedBy=multi-user.target
+
+[Unit]
+Description=Apache Spark Master
+After=network.target
+
+[Service]
+Type=simple
+User=spark
+Group=spark
+WorkingDirectory=/opt/spark
+Environment=SPARK_HOME=/opt/spark
+Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ExecStart=/opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
 
 sudo systemctl daemon-reload
 sudo systemctl start spark-master
