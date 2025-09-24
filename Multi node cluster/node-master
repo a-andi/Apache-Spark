@@ -59,29 +59,34 @@ ssh-copy-id <user@worker-nodeip>
 	touch -/.ssh/authorized_key 		#in worker
 	cat -/.ssh/idrsa.pub	    		#in master node and copy thr key
 	sudo nano -/.ssh/authorized_key		#in worker then paste the key
-	
+
+# Group
+sudo groupadd --system spark
+
 #if need user spark
-sudo useradd spark
+sudo useradd -s /bin/false -g sparkkuneh --system spark
+
+chown -R sparkkuneh:sparkkuneh /opt/spark
+sudo chmod +x /opt/spark/sbin/start-master.sh
 
 #Create a systemd service file for apache spark
 nano /etc/systemd/system/spark-master.service
 
 [Unit]
-Description=Apache Spark Master
-After=network.target
-
+	Description=Apache Spark Master
+	After=network.target
+	
 [Service]
-Type=simple
-User=spark
-Group=spark
-WorkingDirectory=/opt/spark
-Environment=SPARK_HOME=/opt/spark
-Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-ExecStart=/opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
-Restart=on-failure
+	Type=forking
+	User=sparkkuneh
+	Group=spark
+	Environment=SPARK_HOME=/opt/spark
+	ExecStart=/opt/spark/sbin/start-master.sh
+	ExecStop=/opt/spark/sbin/stop-master.sh
+	Restart=on-failure
 
 [Install]
-WantedBy=multi-user.target
+	WantedBy=multi-user.target
 
 sudo systemctl daemon-reload
 sudo systemctl start spark-master
