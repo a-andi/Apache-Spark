@@ -78,7 +78,7 @@ nano /etc/systemd/system/spark-slave.service
 	User=spark
 	Group=spark
 	Environment=SPARK_HOME=/opt/spark
-	ExecStart=/opt/spark/sbin/start-worker.sh spark://<your-server01-ip>:7077,//<your-server02-ip>:7077,//<your-server01-ip>:7077
+	ExecStart=/opt/spark/sbin/start-worker.sh spark://<your-server01-ip>:7077,<your-server02-ip>:7077,<your-server03-ip>:7077
 	ExecStop=/opt/spark/sbin/stop-worker.sh
 	Restart=on-failure
 	
