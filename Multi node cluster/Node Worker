@@ -57,8 +57,15 @@ ssh-copy-id <user@worker-nodeip>
 	cat -/.ssh/idrsa.pub	    		#in master node and copy thr key
 	sudo nano -/.ssh/authorized_key		#in worker then paste the key
 	
-#if needed user spark
-sudo useradd spark
+# Group
+sudo groupadd --system spark
+
+#if need user spark
+sudo useradd -s /bin/false -g sparkkuneh --system spark
+
+chown -R sparkkuneh:sparkkuneh /opt/spark
+sudo chmod +x /opt/spark/sbin/start-worker.sh
+
 
 #Create a systemd service file for apache spark
 nano /etc/systemd/system/spark-slave.service
