@@ -69,20 +69,21 @@ sudo chmod +x /opt/spark/sbin/start-worker.sh
 
 #Create a systemd service file for apache spark
 nano /etc/systemd/system/spark-slave.service
-	[Unit]
+[Unit]
 	Description=Apache Spark Slave
 	After=network.target
 	
-	[Service]
+[Service]
 	Type=forking
-	user=spark
+	User=spark
 	Group=spark
-	ExecStart=/opt/spark/sbin/start-worker.sh spark://<your-server-ip>:7077
+	Environment=SPARK_HOME=/opt/spark
+	ExecStart=/opt/spark/sbin/start-worker.sh spark://<your-server01-ip>:7077,//<your-server02-ip>:7077,//<your-server01-ip>:7077
 	ExecStop=/opt/spark/sbin/stop-worker.sh
+	Restart=on-failure
 	
-	[Install]
+[Install]
 	WantedBy=multi-user.target
-
 
 sudo systemctl daemon-reload
 sudo systemctl start spark-slave
