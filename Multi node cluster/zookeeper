@@ -1,0 +1,131 @@
+ZooKeeper butuh Java (OpenJDK 11 atau 17).
+
+sudo apt update && sudo apt upgrade -y
+sudo apt install default-jdk wget tar -y
+#sudo apt update -y
+#sudo apt install openjdk-17-jdk -y
+java -version
+
+2. Download & Extract ZooKeeper
+cd /opt
+sudo wget https://dlcdn.apache.org/zookeeper/zookeeper-3.9.4/apache-zookeeper-3.9.4-bin.tar.gz
+#sudo wget https://downloads.apache.org/zookeeper/stable/apache-zookeeper-3.9.2-bin.tar.gz
+sudo tar -xvzf apache-zookeeper-3.9.4-bin.tar.gz
+sudo mv apache-zookeeper-3.9.4-bin zookeeper
+sudo mkdir -p /var/lib/zookeeper
+
+3. Konfigurasi zoo.cfg
+
+Buat file config:
+
+sudo nano /opt/zookeeper/conf/zoo.cfg
+
+
+Isi contoh untuk 3 node cluster:
+
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir=/var/lib/zookeeper
+clientPort=2181
+# server.<id>=<hostname>:<peerPort>:<electionPort>
+server.1=zoo1:2888:3888
+server.2=zoo2:2888:3888
+server.3=zoo3:2888:3888
+4lw.commands.whitelist=*
+
+
+#################################################################################
+  GNU nano 7.2                                                                                            /opt/zookeeper/conf/zoo.cfg
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir=/var/lib/zookeeper
+clientPort=2181
+# server.<id>=<hostname>:<peerPort>:<electionPort>
+
+#server.1=zoo1:2888:3888
+#server.2=zoo2:2888:3888
+#server.3=zoo3:2888:3888
+
+server.1=103.152.63.231:2888:3888
+server.2=103.152.63.232:2888:3888
+server.3=103.152.63.233:2888:3888
+
+4lw.commands.whitelist=*
+
+#################################################################################
+
+
+4. Atur myid di tiap node
+
+Di zoo1:
+
+echo 1 | sudo tee /var/lib/zookeeper/myid
+
+
+Di zoo2:
+
+echo 2 | sudo tee /var/lib/zookeeper/myid
+
+
+Di zoo3:
+
+echo 3 | sudo tee /var/lib/zookeeper/myid
+
+5. Buat Systemd Service
+sudo nano /etc/systemd/system/zookeeper.service
+
+
+Isi:
+
+[Unit]
+Description=Apache Zookeeper Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/zookeeper/bin/zkServer.sh start-foreground
+ExecStop=/opt/zookeeper/bin/zkServer.sh stop
+Restart=on-abnormal
+User=root
+
+[Install]
+WantedBy=multi-user.target
+
+
+Reload systemd dan enable service:
+
+sudo systemctl daemon-reload
+sudo systemctl enable zookeeper
+sudo systemctl start zookeeper
+sudo systemctl status zookeeper
+
+6. Testing
+
+Cek status ZooKeeper:
+
+/opt/zookeeper/bin/zkServer.sh status
+
+
+Coba koneksi client:
+
+/opt/zookeeper/bin/zkCli.sh -server localhost:2181
+
+🔹 Cara cek lagi setelah diaktifkan
+
+Cek status ZooKeeper node:
+
+echo stat | nc localhost 2181
+
+
+Cek health:
+
+echo ruok | nc localhost 2181
+
+
+Harus balas imok.
+
+Cek metrics lengkap:
+
+echo mntr | nc localhost 2181
