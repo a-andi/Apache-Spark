@@ -1,31 +1,93 @@
-Download Spark pre-built (misalnya Spark 3.5 + Hadoop 3):
+Ubuntu 24.
+=====================
+sudo apt update
+sudo apt-get install default-jdk curl -y
 
-wget https://dlcdn.apache.org/spark/spark-3.5.1/spark-3.5.1-bin-hadoop3.tgz
-tar -xvzf spark-3.5.1-bin-hadoop3.tgz
+#OR
+
+sudo apt update && sudo apt upgrade -y
+sudo apt install default-jdk scala git wget unzip -y
+
+java -version
+
+sudo wget https://dlcdn.apache.org/spark/spark-3.5.1/spark-3.5.1-bin-hadoop3.tgz
+sudo tar xvf spark-3.5.1-bin-hadoop3
 sudo mv spark-3.5.1-bin-hadoop3 /opt/spark
 
-Set environment (tambahkan ke ~/.bashrc):
+#configure
+sudo nano ~/.profile
+#add Text
+	export SPARK_HOME=/opt/spark
+	export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+	export PYSPARK_PYTHON=/usr/bin/python3
+#load Profile
+	source ~/.profile
 
-export SPARK_HOME=/opt/spark
-export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+#Configure Spark-env.sh
+cp /opt/spark/conf/spark-env.sh.template /opt/spark/conf/spark-env.sh
+sudo nano /opt/spark/conf/spark-env.sh
+export SPARK_MASTER_HOST='master_node_ip'
+export JAVA_HOME='/usr/lib/jvm/java-21-openjdk-amd64'
+export SPARK_WORKER_CORE=2
+export SPARK_WORKER_MEMORY=4G
+export SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER \
+                        -Dspark.deploy.zookeeper.url=Dspark.deploy.zookeeper.url=103.152.63.231:2181,103.152.63.232:2181,103.152.63.233:2181 \
+                        -Dspark.deploy.zookeeper.dir=/spark"
 
-Aktifkan perubahan:
 
-source ~/.bashrc
+#Install PySpark (untuk Python)
+	sudo apt update && sudo apt install python3-pip -y
+	pip install pyspark findspark
+#Cek versi:
+	python3 -c "import pyspark; print(pyspark.__version__)"
 
-🔹 4. Konfigurasi Spark Master (3 node)
+#configure worker in master node
+sudo nano/opt/spark/conf/worker
+<worker-node-1-ip>
+<worker-node-2-ip>
+<worker-node-3-ip>
 
-Edit /opt/spark/conf/spark-env.sh (buat file jika belum ada):
+#if needed SSH Paswordless setup
+ssh-keygen -t rsa (enter trus)
+ssh-copy-id <user@worker-nodeip>
+	if can't open
+	 
+	touch -/.ssh/authorized_key 		#in worker
+	cat -/.ssh/idrsa.pub	    		#in master node and copy thr key
+	sudo nano -/.ssh/authorized_key		#in worker then paste the key
 
-export SPARK_MASTER_HOST=$(hostname)
-export SPARK_DAEMON_JAVA_OPTS="
--Dspark.deploy.recoveryMode=ZOOKEEPER
--Dspark.deploy.zookeeper.url=zoo1:2181,zoo2:2181,zoo3:2181
--Dspark.deploy.zookeeper.dir=/spark-ha"
+# Group
+sudo groupadd --system spark
 
-Start Master di tiap node:
+#if need user spark
+sudo useradd -s /bin/false -g sparkkuneh --system spark
 
-$SPARK_HOME/sbin/start-master.sh
+chown -R sparkkuneh:sparkkuneh /opt/spark
+sudo chmod +x /opt/spark/sbin/start-master.sh
+
+#Create a systemd service file for apache spark
+nano /etc/systemd/system/spark-master.service
+
+[Unit]
+	Description=Apache Spark Master
+	After=network.target
+	
+[Service]
+	Type=forking
+	User=sparkkuneh
+	Group=spark
+	Environment=SPARK_HOME=/opt/spark
+	ExecStart=/opt/spark/sbin/start-master.sh
+	ExecStop=/opt/spark/sbin/stop-master.sh
+	Restart=on-failure
+
+[Install]
+	WantedBy=multi-user.target
+
+sudo systemctl daemon-reload
+sudo systemctl start spark-master
+sudo systemctl enable spark-master
+sudo systemctl status spark-master
 
 
 Cek web UI:
