@@ -1,0 +1,39 @@
+Download Spark pre-built (misalnya Spark 3.5 + Hadoop 3):
+
+wget https://dlcdn.apache.org/spark/spark-3.5.1/spark-3.5.1-bin-hadoop3.tgz
+tar -xvzf spark-3.5.1-bin-hadoop3.tgz
+sudo mv spark-3.5.1-bin-hadoop3 /opt/spark
+
+Set environment (tambahkan ke ~/.bashrc):
+
+export SPARK_HOME=/opt/spark
+export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+
+Aktifkan perubahan:
+
+source ~/.bashrc
+
+🔹 4. Konfigurasi Spark Master (3 node)
+
+Edit /opt/spark/conf/spark-env.sh (buat file jika belum ada):
+
+export SPARK_MASTER_HOST=$(hostname)
+export SPARK_DAEMON_JAVA_OPTS="
+-Dspark.deploy.recoveryMode=ZOOKEEPER
+-Dspark.deploy.zookeeper.url=zoo1:2181,zoo2:2181,zoo3:2181
+-Dspark.deploy.zookeeper.dir=/spark-ha"
+
+Start Master di tiap node:
+
+$SPARK_HOME/sbin/start-master.sh
+
+
+Cek web UI:
+
+http://spark-master1:8080
+
+http://spark-master2:8080
+
+http://spark-master3:8080
+
+👉 Hanya 1 master aktif (leader), lainnya standby.
