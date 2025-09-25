@@ -1,0 +1,100 @@
+Ubuntu 24.
+========================
+
+#Install worker node#
+
+sudo apt update && sudo apt upgrade -y
+sudo apt install default-jdk scala git wget unzip -y
+
+java -version
+
+sudo wget https://dlcdn.apache.org/spark/spark-4.0.1/spark-4.0.1-bin-hadoop3.tgz
+sudo tar xvf spark-4.0.0-bin-hadoop3.tgz
+
+sudo mv spark-4.0.0-bin-hadoop3 /opt/spark
+
+#configure
+sudo nano ~/.profile
+#add Text
+	export SPARK_HOME=/opt/spark
+	export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+	export PYSPARK_PYTHON=/usr/bin/python3
+#load Profile
+	source ~/.profile
+
+#Configure Spark-env.sh
+cp /opt/spark/conf/spark-env.sh.template /opt/spark/conf/spark-env.sh
+sudo nano /opt/spark/conf/spark-env.sh
+export JAVA_HOME='/usr/lib/jvm/java-21-openjdk-amd64'
+export SPARK_WORKER_CORES=2
+export SPARK_WORKER_MEMORY=2g
+export SPARK_WORKER_PORT=7078
+export SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER \
+                        -Dspark.deploy.zookeeper.url=zoo1:2181,zoo2:2181,zoo3:2181
+                        -Dspark.deploy.zookeeper.dir=/spark"
+
+#Install PySpark (untuk Python)
+	sudo apt update && sudo apt install python3-pip -y
+	pip install pyspark findspark
+#Cek versi:
+	python3 -c "import pyspark; print(pyspark.__version__)"
+
+#if needed SSH Paswordless setup
+ssh-keygen -t rsa (enter trus)
+ssh-copy-id <user@worker-nodeip>
+	if can't open
+	 
+	touch -/.ssh/authorized_key 		#in worker
+	cat -/.ssh/idrsa.pub	    		#in master node and copy thr key
+	sudo nano -/.ssh/authorized_key		#in worker then paste the key
+	
+# Group
+sudo groupadd --system spark
+
+#if need user spark
+sudo useradd -s /bin/false -g sparkkuneh --system spark
+
+chown -R sparkkuneh:sparkkuneh /opt/spark
+sudo chmod +x /opt/spark/sbin/start-worker.sh
+
+
+#Create a systemd service file for apache spark
+nano /etc/systemd/system/spark-slave.service
+[Unit]
+	Description=Apache Spark Slave
+	After=network.target
+	
+[Service]
+	Type=forking
+	User=sparkkuneh
+	Group=spark
+	Environment=SPARK_HOME=/opt/spark
+	ExecStart=/opt/spark/sbin/start-worker.sh spark://<your-server01-ip>:7077,<your-server02-ip>:7077,<your-server03-ip>:7077
+	ExecStop=/opt/spark/sbin/stop-worker.sh
+	Restart=on-failure
+	
+[Install]
+	WantedBy=multi-user.target
+
+sudo systemctl daemon-reload
+sudo systemctl start spark-slave
+sudo systemctl enable spark-slave
+sudo systemctl status spark-slave
+
+# Testing HA
+
+Jalankan job:
+
+spark-submit --master spark://spark-master1:7077,spark-master2:7077,spark-master3:7077 \
+--class org.apache.spark.examples.SparkPi \
+$SPARK_HOME/examples/jars/spark-examples*.jar 10
+
+
+Matikan master aktif:
+
+pkill -f Master
+
+
+→ ZooKeeper otomatis tunjuk master lain.
+
+Worker tetap jalan, job baru bisa dijalankan.
